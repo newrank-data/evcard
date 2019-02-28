@@ -1,1 +1,3 @@
-nr/__pycache__/
+token
+settings.json
+*.pyc
