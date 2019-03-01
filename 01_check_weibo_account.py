@@ -28,6 +28,7 @@ brands = [
     {'name': 'car2go', 'keyword': 'car2go'},
     {'name': 'morefun', 'keyword': '摩范出行'},
     {'name': 'ponycar', 'keyword': 'ponycar'}]
+today = str(datetime.date.today())
 
 def assemble(item):
     return {'id': str(item['user']['id']), 'name': item['user']['screen_name']}
@@ -80,7 +81,8 @@ for brand in brands:
                 'is_valid': None,
                 'is_primary': None,
                 'is_regional': None,
-                'region': None
+                'region': None,
+                'inserted_at': today
                 })
 
 if new_account_count:

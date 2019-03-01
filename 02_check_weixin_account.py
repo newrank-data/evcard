@@ -30,6 +30,7 @@ brands = [{'name': 'evcard', 'keyword': 'evcard'},
     {'name': 'car2go', 'keyword': 'car2go'},
     {'name': 'morefun', 'keyword': '摩范出行'},
     {'name': 'ponycar', 'keyword': 'ponycar'}]
+today = str(datetime.date.today())
 
 
 def extract(item):
@@ -89,7 +90,8 @@ for brand in brands:
                 'is_valid': None,
                 'is_primary': None,
                 'is_regional': None,
-                'region': None
+                'region': None,
+                'inserted_at': today
                 })
 
 if new_account_count:
