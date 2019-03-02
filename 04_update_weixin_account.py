@@ -37,26 +37,20 @@ for account in info_accounts:
     if 'wx_id' not in account:
         info = nr.get_weixin_account_wx_info(account['id'])
         if info:
-            collection.update({'_id': ObjectId(account['_id'])}, {'$set': {
-                'wx_id': info['wx_id'],
-                'biz_info': info['biz_info'],
-                'updated_at': today
-            }})
+            collection.update(
+                {'_id': ObjectId(account['_id'])},
+                {'$set': {'wx_id': info['wx_id'],'biz_info': info['biz_info']}})
         else:
             print('%-50s' % ('--> wx 信息为空：{}（{}）'.format(account['name'], account['id'])))
+        time.sleep(3)
 
     if 'uuid' not in account:
         uuid = nr.get_weixin_account_nr_info(account['id'])
         if uuid:
-            collection.update({'_id': ObjectId(account['_id'])}, {'$set': {
-                'uuid': uuid,
-                'updated_at': today
-            }})
+            collection.update({'_id': ObjectId(account['_id'])}, {'$set': {'uuid': uuid}})
         else:
             print('%-50s' % ('--> nr 信息为空：{}（{}）'.format(account['name'], account['id'])))
-    
-    # 每个账号请求间隔 5 秒
-    time.sleep(5)
+        time.sleep(3)
 
 
 article_accounts = list(collection.find(
@@ -64,6 +58,15 @@ article_accounts = list(collection.find(
     {'id': 1, 'name': 1, 'uuid': 1}))
 
 for account in article_accounts:
-    
+    t = nr.get_weixin_account_latest_publish_time(account['uuid'])
+    if t:
+        print('%-50s' % ('--> {}（{}）{}'.format(account['name'], account['id'], t)), end='\r')
+        collection.update(
+            {'_id': ObjectId(account['_id'])},
+            {'$set': {'latest_publish_at': t,'updated_at': today}})
+    else:
+        print('%-50s' % ('--> 发布时间为空：{}（{}）'.format(account['name'], account['id'])))
+    time.sleep(3)
 
+print('\n√ 更新完成！信息为空的账号请确认是否录入了新榜，发布时间为空的请确认是否需要设为无效')
 client.close()

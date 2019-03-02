@@ -123,9 +123,9 @@ def update_token():
  
 # 发起请求
 def request(base, endpoint, params):
-    cookies = {'token': get_token()}
+    token = get_token()
     data = assemble_data(endpoint, params)
-    r = requests.post(base + endpoint, cookies = cookies, data = data)
+    r = requests.post(base + endpoint, cookies = {'token': token}, data = data)
     if r.status_code == 200:
         r = r.json()
         if isinstance(r['value'], (dict, list)) or r['value'] == 1:
@@ -134,7 +134,7 @@ def request(base, endpoint, params):
             print('验证失败：', endpoint, data, r)
             return None
     else:
-        print('请求失败：', endpoint, data, r)
+        print('请求失败：', endpoint, data, r, token)
         return None
 
 
@@ -193,12 +193,15 @@ def get_weixin_account_nr_info(id):
 def get_weixin_account_latest_publish_time(uuid):
     base = 'https://www.newrank.cn/xdnphb'
     endpoint = '/detail/getAccountArticle'
-    r = request(base, endpoint, {'flag': 'true', 'uuid': uuid})
-    if r and 'lastestArticle' in r and r['lastestArticle']:
-        return r['lastestArticle'][0]['publicTime']
-    else:
-        return None
-    
+
+    # 接口不稳定，需要有重试机制
+    r, t = None, None
+    while not r:
+        r = request(base, endpoint, {'flag': 'true', 'uuid': uuid})
+        if r and 'lastestArticle' in r and r['lastestArticle']:
+            t =  r['lastestArticle'][0]['publicTime'][:10]
+            break
+    return t
 
 # 获取回采公众号账号
 def get_weixin_acq_account():
