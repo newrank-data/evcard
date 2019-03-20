@@ -28,8 +28,6 @@ username, password, md_key, app_key = '', '', '', ''
 
 # 初始化，读取 settings 获取用户名及密码
 file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'settings.json')
-print(file_path)
-exit()
 with open(file_path, 'r') as f:
     s = json.load(f)
     username, password, md_key, app_key = s['username'], s['password'], s['md_key'], s['app_key']
