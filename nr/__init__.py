@@ -20,6 +20,7 @@ import json
 import time
 import random
 import hashlib
+import re
 
 # 其他配置
 username, password, md_key, app_key = '', '', '', ''
@@ -78,7 +79,7 @@ def get_flag():
     return timestamp + random_number
 
 
-# 获取 token，优先从本地获取，超过半小时再重新请求
+# 获取 token，优先从本地获取，超过 15 分钟再重新请求
 def get_token():
     file_path = os.path.abspath(os.path.dirname(__file__)) + '/token'
     file_existence = os.path.exists(file_path)
@@ -86,7 +87,7 @@ def get_token():
     if file_existence:
         file_mtime = os.stat(file_path).st_mtime
         now = int(time.time())
-        if now - file_mtime > 300:
+        if now - file_mtime > 900:
             update_token()    
     else:
         update_token()
@@ -133,9 +134,12 @@ def request(base, endpoint, params):
         else:
             print('验证失败：', endpoint, data, r)
             return None
+    elif r.status_code == 504:
+        return None
     else:
         print('请求失败：', endpoint, data, r, token)
         return None
+
 
 
 # 获取榜豆数量
@@ -146,33 +150,54 @@ def count_bangdou():
     return int(float(r['bangdou']))
 
 
-# 获取微信上的公众号信息（wx_id 和 biz_info）
-def get_weixin_account_wx_info(id):
+# 搜索微信上的公众号信息（结果可能是 0 到任意个）
+def search_weixin_account_wx_info(keyword):
     base = 'https://www.newrank.cn/xdnphb'
     endpoint = '/data/weixinuser/searchWeixinDataByCondition'
     
     # 接口不稳定，需要有重试机制
-    r, info = None, None
+    r, accounts, retry_count = None, [], 0
     while not r:
+        if retry_count > 0:
+            print('重试第 {} 次'.format(retry_count))
         r = request(base, endpoint, {
                 'filter': '',
                 'hasDeal': 'false',
-                'keyName': id,
+                'keyName': keyword,
                 'order': 'relation'
             })
+        retry_count += 1
         time.sleep(5)
 
-    if r:
+    if r['result']:
         for v in r['result']:
-            if v['account'] == id:
+            accounts.append({
+                'id': v['account'],
+                'wx_id': v['wxIdLower'],
+                'biz_info': v['bizInfo'],
+                'name': re.sub(r'[\@|\#]font', '', v['name']),
+                'type': v['accountType'],
+                'category': v['type'],
+                'tags': v['tags'],
+                'uuid': v['uuid'],
+                'certification': re.sub(r'微信认证：', '', v['certifiedText']) if v['certifiedText'] else None
+            })
+    return accounts
+
+# 获取微信上的公众号信息（结果可能是 0 到 1 个，完全匹配 id）
+def get_weixin_account_wx_info(id):
+    accounts = search_weixin_account_wx_info(id)
+    info = None
+    if accounts:
+        for account in accounts:
+            if account['id'] == id:
                 info =  {
                     'id': id,
-                    'wx_id': v['wxIdLower'],
-                    'biz_info': v['bizInfo']
+                    'wx_id': account['wx_id'],
+                    'biz_info': account['biz_info']
                 }
                 break
     return info
-
 
 # 获取新榜上的公众号信息（uuid）
 def get_weixin_account_nr_info(id):
@@ -203,12 +228,13 @@ def get_weixin_account_latest_publish_time(uuid):
             break
     return t
 
+
 # 获取回采公众号账号
 def get_weixin_acq_account():
     base = 'https://data.newrank.cn/xdnphb'
     endpoint = '/app/data/dataacq/getDataAcqOrder'
     r = request(base, endpoint, {})
-    return r['lastestArticle'][0]['publicTime']
+    return r
 
 
 # 获取公众号账号列表差集
@@ -222,31 +248,26 @@ def diff_weixin_account(list_1, list_2):
                 break
         if not flag:
             diff_list.append(i['biz_info'])
+    return diff_list
 
 
 # 增加回采公众号账号
-def insert_weixin_acq_account(accounts):
+def insert_weixin_acq_account(account):
     base = 'https://data.newrank.cn/xdnphb'
     endpoint = '/app/data/dataacq/insertDataAcqOrder'
-    success_count = 0
-    for account in accounts:
-        r = request(base, endpoint, account)
-        success_count += 1 if r['status'] == 1 else 0
-    return success_count
+    r = request(base, endpoint, account)
+    return 1 if r['status'] == 1 else 0
 
 
 # 删除回采公众号账号
-def delete_weixin_acq_account(accounts):
+def delete_weixin_acq_account(account):
     base = 'https://data.newrank.cn/xdnphb'
     endpoint = '/app/data/dataacq/delDataAcqOrder'
-    success_count = 0
-    for account in accounts:
-        r = request(base, endpoint, account)
-        success_count += 1 if r == 1 else 0
-    return success_count
+    r = request(base, endpoint, account)
+    return 1 if r == 1 else 0
 
 
-# 提交回采公众号任务
+# 提交公众号回采任务
 def submit_weixin_acq_order(start_date, end_date):
     base = 'https://data.newrank.cn/xdnphb'
     endpoint = '/app/data/dataacq/inserAcqTask'
@@ -256,4 +277,12 @@ def submit_weixin_acq_order(start_date, end_date):
         'end_time': end_date + ' 00:00:00',
         'is_include': 1
     })
+    return r['status']
+
+
+# 提交微博回采任务
+def submit_weibo_acq_order(item):
+    base = 'https://data.newrank.cn/xdnphb'
+    endpoint = '/app/data/weibodataacq/insertTask'
+    r = request(base, endpoint, {'item': item})
     return r['status']

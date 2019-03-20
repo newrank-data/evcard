@@ -1,5 +1,5 @@
-#!/usr/local/bin/python
-#coding=utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # 此脚本用于采集提及了本竞品品牌的微博，使用 mentioning 字段记录提及的品牌
 # 注意：此脚本使用的微博接口并没有返回所有微博，非特殊需要请使用 Web Scaper 采集 html 页面，再使用 07_handle_weibo_keyword.py 来处理
@@ -47,7 +47,7 @@ def input_date(prompt):
         if matches:
             flag = True
         else:
-            print('🙅‍  格式不正确')
+            print('× 格式不正确')
     return datetime.date(int(matches.group(1)), int(matches.group(2)), int(matches.group(3)))
 
 def format_date(time):
@@ -63,7 +63,7 @@ def format_date(time):
 def fetch_mblog(brand):
     mblogs, page, next_flag = [], 1, True
     while next_flag:
-        print('%-40s' % ('⌛️  采集中：{}|第{}页...'.format(brand['name'], page)), end='\r')
+        print('%-40s' % ('采集中：{}|第{}页...'.format(brand['name'], page)), end='\r')
         url = url_templ.format(brand['keyword'], page)
         r = requests.get(url, headers = headers)
         if r.status_code == 200:
@@ -81,7 +81,6 @@ def fetch_mblog(brand):
                     date = format_date(mblog['created_at'])
 
                     # 判断是否在日期范围内
-                    print(str(date))
                     if date.__ge__(start_date) and date.__le__(end_date):
                         content = ''
                         if mblog['isLongText']:
@@ -104,10 +103,10 @@ def fetch_mblog(brand):
                         next_flag = False
                         break
             else:
-                print('%-40s' % ('💩  获取失败：{} | {}'.format(brand['name'], url)))
+                print('%-40s' % ('× 获取失败：{} | {}'.format(brand['name'], url)))
                 break
         else:
-            print('%-40s' % ('💩  请求失败：{} | {}'.format(brand['name'], url)))
+            print('%-40s' % ('× 请求失败：{} | {}'.format(brand['name'], url)))
             break
 
         time.sleep(5)
@@ -115,11 +114,11 @@ def fetch_mblog(brand):
     return mblogs
     
 # 手动输入日期范围并校验
-print('💁  按 yyyy-mm-dd 格式输入日期范围...')
+print('>>> 按 yyyy-mm-dd 格式输入日期范围...')
 start_date = input_date('开始日期：')
 end_date = input_date('结束日期：')
 if start_date.__gt__(end_date):
-    print('🙅  开始日期不能大于结束日期')
+    print('× 开始日期不能大于结束日期')
     exit()
 
 
@@ -128,7 +127,7 @@ for brand in brands:
     mblogs = fetch_mblog(brand)
     mblog_count = len(mblogs)
     if mblog_count:
-        print('%-40s' % ('👉  {}（{}）相关微博有 {} 条'.format(brand['name'], brand['keyword'], mblog_count)))
+        print('%-40s' % ('--> {}（{}）相关微博有 {} 条'.format(brand['name'], brand['keyword'], mblog_count)))
 
         for mblog in mblogs:
             _mblog = keyword_collection.find_one({'id': mblog['id']})
@@ -143,6 +142,6 @@ for brand in brands:
                 mblog['inserted_at'] = str(today)
                 keyword_collection.insert_one(mblog)
     else:
-        print('%-40s' % ('🤷‍  {}（{}）没有相关微博'.format(brand['name'], brand['keyword'])))
+        print('%-40s' % ('--> {}（{}）没有相关微博'.format(brand['name'], brand['keyword'])))
 
 client.close()

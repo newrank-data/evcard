@@ -11,6 +11,7 @@ from pymongo import MongoClient
 # 内置库
 import json
 import time
+import datetime
 
 # 数据库配置
 client = MongoClient()
@@ -27,7 +28,8 @@ brands = [
     {'name': 'panda', 'keyword': '盼达用车'},
     {'name': 'car2go', 'keyword': 'car2go'},
     {'name': 'morefun', 'keyword': '摩范出行'},
-    {'name': 'ponycar', 'keyword': 'ponycar'}]
+    {'name': 'ponycar', 'keyword': 'ponycar'},
+    {'name': 'xiaoju', 'keyword': '小桔租车'}]
 today = str(datetime.date.today())
 
 def assemble(item):
