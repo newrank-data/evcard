@@ -27,7 +27,9 @@ username, password, md_key, app_key = '', '', '', ''
 
 
 # 初始化，读取 settings 获取用户名及密码
-file_path = os.path.abspath(os.path.dirname(__file__)) + '/settings.json'
+file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'settings.json')
+print(file_path)
+exit()
 with open(file_path, 'r') as f:
     s = json.load(f)
     username, password, md_key, app_key = s['username'], s['password'], s['md_key'], s['app_key']
@@ -81,7 +83,7 @@ def get_flag():
 
 # 获取 token，优先从本地获取，超过 15 分钟再重新请求
 def get_token():
-    file_path = os.path.abspath(os.path.dirname(__file__)) + '/token'
+    file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'token')
     file_existence = os.path.exists(file_path)
 
     if file_existence:
@@ -110,7 +112,7 @@ def update_token():
         res = r.json()
         if isinstance(res['value'], dict):
             token = res['value']['token']
-            file_path = os.path.abspath(os.path.dirname(__file__)) + '/token'
+            file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'token')
             with open(file_path, 'w') as f:
                 f.write(token)
         else:
