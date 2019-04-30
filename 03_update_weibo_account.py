@@ -57,7 +57,7 @@ def fetch_info(account, url_templ):
 
 
 # 从数据库获取微博账号，获取信息后更新到数据库
-accounts = collection.find({'is_relevant': True}, {'id': 1, 'name': 1})
+accounts = collection.find({'is_relevant': True}, {'id': 1, 'name': 1, 'follower_count': 1})
 for account in accounts:
     basic_info = fetch_info(account, basic_url_templ)
     if basic_info:
@@ -70,6 +70,7 @@ for account in accounts:
                 'mblog_count': mblog_count,
                 'gender': gender,
                 'follower_count':follower_count,
+                'last_follower_count': account['follower_count'],
                 'updated_at': str(today)
             }})
 
@@ -99,6 +100,7 @@ for account in accounts:
     time.sleep(3)
 
     publish_info = fetch_info(account, publish_url_templ)
+    latest_publish_at = None
     if publish_info:
         cards = publish_info['cards']
         t = None
@@ -119,6 +121,7 @@ for account in accounts:
                     t = format_date(mblog['created_at'])
                     break
 
+        latest_publish_at = t
         if t:
             collection.update_one(
                 {'_id': ObjectId(account['_id'])},
@@ -127,6 +130,6 @@ for account in accounts:
                     'updated_at': str(today)
                 }})
 
-    print('%-40s' % ('--> 已更新：{}（{}）'.format(account['name'], account['id'])))
+    print('%-50s' % ('--> 已更新：{}（{}）{}'.format(account['name'], account['id'], latest_publish_at if latest_publish_at else '')), end='\r')
 
 client.close()

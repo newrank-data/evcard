@@ -1,0 +1,4 @@
+此目录用于待处理的的原始文件，包括：
+- weibo_YYYYMM.xlsx —— YYYY年MM月的微博回采数据表
+- weixin_YYYYMM.xlsx —— YYYY年MM月的微信回采数据表
+- t_data_YYYYMM.xlsx —— YYYY年MM月的海量回溯 data 数据表

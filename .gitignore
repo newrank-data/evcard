@@ -1,3 +1,7 @@
 token
 settings.json
 *.pyc
+src/weibo_*.xlsx
+src/weixin_*.xlsx
+src/t_data_*.xlsx
+dist/*.xlsx
