@@ -27,6 +27,7 @@ collection = db.sharecar_weibo_account
 # 其他配置
 today = datetime.date.today()
 year = today.year
+month = today.month
 oneday = datetime.timedelta(days = 1)
 yestoday = today - oneday
 
@@ -38,8 +39,11 @@ def format_date(time):
         return yestoday
     else:
         m = re.match(r'(\d{4})?-?0?(\d{1,2})-0?(\d{1,2})', time)
-        m_year = int(m.group(1)) if m.group(1) else year
-        return datetime.date(m_year, int(m.group(2)), int(m.group(3)))
+        if m:
+            m_year = int(m.group(1)) if m.group(1) else year
+            return datetime.date(m_year, int(m.group(2)), int(m.group(3)))
+        else:
+            return None
 
 def fetch_info(account, url_templ):
     url = url_templ.format(account['id'])
@@ -57,20 +61,29 @@ def fetch_info(account, url_templ):
 
 
 # 从数据库获取微博账号，获取信息后更新到数据库
-accounts = collection.find({'is_relevant': True}, {'id': 1, 'name': 1, 'follower_count': 1})
+accounts = collection.find({'is_relevant': True, 'is_valid': True},\
+    {'id': 1, 'name': 1, 'follower_count': 1, 'last_follower_count': 1,'updated_at': 1})
 for account in accounts:
     basic_info = fetch_info(account, basic_url_templ)
     if basic_info:
         mblog_count = basic_info['userInfo']['statuses_count']
         gender = basic_info['userInfo']['gender']
         follower_count = basic_info['userInfo']['followers_count']
+
+        if 'updated_at' in account and 'follower_count' in account:
+            account['last_follower_count'] = account['follower_count']
+            # if not account['updated_at'][:7] == str(today)[:7]:
+            #     account['last_follower_count'] = account['follower_count']
+        else:
+            account['last_follower_count'] = 0
+
         collection.update_one(
             {'_id': ObjectId(account['_id'])},
             {'$set':{
                 'mblog_count': mblog_count,
                 'gender': gender,
                 'follower_count':follower_count,
-                'last_follower_count': account['follower_count'],
+                'last_follower_count': account['last_follower_count'],
                 'updated_at': str(today)
             }})
 
@@ -113,6 +126,9 @@ for account in accounts:
                 mblog = card['mblog']
                 if 'title' in mblog:
                     t = format_date(mblog['created_at'])
+                    if not t:
+                        print(mblog)
+                        exit()
                 elif t:
                     ct = format_date(mblog['created_at'])
                     t = ct if ct.__gt__(t) else t
