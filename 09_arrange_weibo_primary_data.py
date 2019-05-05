@@ -199,12 +199,12 @@ def summarize_mention(keywords, mentions):
                 authors.append({'oid': m['oid'], 'name': m['author'],\
                     'quote_count': m['quote_count'],'comment_count': m['comment_count'],\
                     'max_quote_count': m['quote_count'], 'max_comment_count': m['comment_count'],\
-                    'max_quote_url': m['url'], 'max_comment_urld': m['url']})
+                    'max_quote_url': m['url'], 'max_comment_url': m['url']})
     authors.sort(key=lambda a: a['quote_count'], reverse=True)
     quote_author_rank = authors[:5]
     authors.sort(key=lambda a: a['comment_count'], reverse=True)
     comment_author_rank = authors[:5]
-    return {'mention_count': mention_count, 'quote_quthor_rank': quote_author_rank, 'comment_author_rank': comment_author_rank}
+    return {'mention_count': mention_count, 'quote_author_rank': quote_author_rank, 'comment_author_rank': comment_author_rank}
 
 
 # 过滤官方提及
@@ -359,7 +359,6 @@ for p in primarys:
 
 
 # 获取本月及上月的提及数量，删除无关，计算增长数量和增长率
-ws.append([])
 mentions = utils.get_mentions(mention_filename)
 last_metions = utils.get_mentions(last_mention_filename)
 cleanup_mentions = cleanup_mention(mentions)
@@ -379,16 +378,35 @@ if not cleanup_flag == 'y':
     print('退出脚本运行，若发现新歧义词则更新歧义词表后重新运行')
     exit()
 
+ws.append(['品牌', '上期数量', '本期数量', '增长数', '增长率'])
 for p in primarys:
     last_cleanup_mentions = cleanup_mention(last_metions)
     mention_summary = summarize_mention(p['keyword'], cleanup_mentions)
     last_mention_summary = summarize_mention(p['keyword'], last_cleanup_mentions)
-    ws.append([])
-    ws.append(['品牌', '上期数量', '本期数量', '增长数', '增长率'])
+
+    if p['id'] == '5992855888':
+        p['mention_summary'] = mention_summary
+
     mention_count_offset = mention_summary['mention_count'] - last_mention_summary['mention_count']
     mention_count_offset_percentage = calc_relative_ratio_1(last_mention_summary['mention_count'], mention_summary['mention_count'])
     ws.append([p['brand_name'], last_mention_summary['mention_count'], mention_summary['mention_count'],\
         mention_count_offset, mention_count_offset_percentage])
-    
+
+
+# EVCARD 提及转发及评论 TOP5
+ws.append([])
+for p in primarys:
+    if p['id'] == '5992855888':
+        ws.append(['EVCARD 转发数 Top5', '转发数', '最多转发微博链接'])
+        for qr in p['mention_summary']['quote_author_rank']:
+            ws.append([qr['name'], qr['quote_count'], qr['max_quote_url']])
+
+        ws.append([])
+
+        ws.append(['EVCARD 评论数 Top5', '评论数', '最多评论微博链接'])
+        for cr in p['mention_summary']['comment_author_rank']:
+            ws.append([cr['name'], cr['comment_count'], cr['max_comment_url']])
+        break
+
 wb.save(os.path.join(dist_path, '微博主号统计表_{}.xlsx'.format(label)))
 print('\n完成！结果文件保存在 dist 目录下')
