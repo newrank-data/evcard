@@ -74,7 +74,7 @@ print('--> 本次任务将回采 {} 个账号，合计 {} 天'.format(len(insert
 
 # 计算要使用多少榜豆，是否足够
 print('\n计算榜豆消耗量...')
-bangdou_cost = len(inserting_accounts) * 15 if date_range < 30 else (date_range - 30) * 0.5 + 15
+bangdou_cost = len(inserting_accounts) * 15 if date_range < 30 else ((date_range - 30) * 0.5 + 15) * len(inserting_accounts)
 bangdou_count = nr.count_bangdou()
 print('--> 回采需要 {} 榜豆，目前有 {} 榜豆'.format(bangdou_cost, bangdou_count))
 if bangdou_cost > bangdou_count:

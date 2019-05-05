@@ -71,9 +71,8 @@ for account in accounts:
         follower_count = basic_info['userInfo']['followers_count']
 
         if 'updated_at' in account and 'follower_count' in account:
-            account['last_follower_count'] = account['follower_count']
-            # if not account['updated_at'][:7] == str(today)[:7]:
-            #     account['last_follower_count'] = account['follower_count']
+            if not account['updated_at'][:7] == str(today)[:7]:
+                account['last_follower_count'] = account['follower_count']
         else:
             account['last_follower_count'] = 0
 
