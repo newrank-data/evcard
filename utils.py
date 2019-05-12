@@ -11,6 +11,35 @@ import os
 # 自定义模块
 import fetchs
 
+# 精准四舍五入保留 1 位小数
+def round_decimal(value):
+    m = re.search(r'\.(\d)5$', str(value))
+    if m and int(m.group(1)) % 2 == 0:
+        return round(value, 1) + 0.1
+    else:
+        return round(value * 1.0, 1)
+
+
+# 计算变化幅度，保留 1 位小数
+def calc_relative_ratio_1(v1, v2):
+    if v1 == 0 and v2 == 0:
+        return '-'
+    elif v1 == 0:
+        return '+∞'
+    else:
+        return str(round_decimal((v2 - v1) / v1 * 100)) + '%'
+
+
+# 计算变化幅度，保留 2 位小数
+def calc_relative_ratio_2(v1, v2):
+    if v1 == 0 and v2 == 0:
+        return '-'
+    elif v1 == 0:
+        return '+∞'
+    else:
+        return str(round((v2 - v1) / v1 * 100, 2)) + '%'
+
+
 # 获取字段名和列索引的映射
 def get_fields(row):
     fields = {}
@@ -51,7 +80,7 @@ def get_articles(filepath):
             article['name'] = row[fields['公众号昵称']]
             article['id'] = row[fields['微信号']]
             article['author'] = row[fields['作者']]
-            article['is_head'] = '是' if row[fields['发布位置']] == 1 else '否'
+            article['is_head'] = '是' if row[fields['发布位置']] == 0 else '否'
             article['is_original'] = '是' if row[fields['是否原创']] == 1 else '否'
             article['video_count'] = row[fields['含视频数量']]
             article['title'] = row[fields['标题']]
@@ -229,7 +258,7 @@ def get_videos(filepath):
 
 
 def match_brand(str):
-    if re.search(r'evcard', str, re.I):
+    if re.search(r'evcard', str, re.I) or str == 'E享会':
         return 'EVCARD'
     elif re.search(r'gofun', str, re.I):
         return 'GoFun'

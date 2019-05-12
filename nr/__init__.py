@@ -21,6 +21,7 @@ import time
 import random
 import hashlib
 import re
+import math
 
 # 其他配置
 username, password, md_key, app_key = '', '', '', ''
@@ -286,3 +287,17 @@ def submit_weibo_acq_order(item):
     endpoint = '/app/data/weibodataacq/insertTask'
     r = request(base, endpoint, {'item': item})
     return r['status']
+
+
+# 计算新榜指数
+def calc_nri(summary, n):
+    if summary['article_count'] == 0:
+        return 0
+    else:
+        R, Rm, Ra, Rh, Z = n * 800000, 100000, 100000, n * 100000, n * 80000
+        _R = math.log(summary['read_sum'] + 1) / math.log(R + 1) * 1000
+        _Rm = math.log(summary['read_max'] + 1) / math.log(Rm + 1) * 1000
+        _Ra = math.log(summary['read_avg'] + 1) / math.log(Ra + 1) * 1000
+        _Rh = math.log(summary['headline_read_sum'] + 1) / math.log(Rh + 1) * 1000
+        _Z = math.log(summary['like_sum'] + 1) / math.log(Z + 1) * 1000
+        return _R * 0.75 + _Rm * 0.05 + _Ra * 0.1 + _Rh * 0.05 + _Z * 0.05

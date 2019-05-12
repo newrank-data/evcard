@@ -66,8 +66,8 @@ for brand in brands:
         else:
             print('× 请求失败', url)
 
-        # 每一页请求间隔 5 秒
-        time.sleep(5)
+        # 每一页请求间隔 30 秒
+        time.sleep(30)
     
     print('%-60s' % ('采集完成：' + brand['name']))
 

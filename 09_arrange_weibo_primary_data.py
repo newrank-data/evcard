@@ -67,16 +67,6 @@ for p in primarys:
 
 # ———————————— 方法 ————————————
 
-
-# 精准四舍五入保留 1 位小数
-def round_decimal(value):
-	m = re.search(r'\.(\d)5$', str(value))
-	if m and int(m.group(1)) % 2 == 0:
-		return round(value, 1) + 0.1
-	else:
-		return round(value * 1.0, 1)
-
-
 # 主号发文筛选器
 def primary_filter(item):
     flag = False
@@ -104,26 +94,6 @@ def summarize_primary(articles):
     return summary
 
 
-# 计算变化幅度，保留 1 位小数
-def calc_relative_ratio_1(v1, v2):
-    if v1 == 0 and v2 == 0:
-        return '-'
-    elif v1 == 0:
-        return '+∞'
-    else:
-        return str(round_decimal((v2 - v1) / v1 * 100)) + '%'
-
-
-# 计算变化幅度，保留 2 位小数
-def calc_relative_ratio_1(v1, v2):
-    if v1 == 0 and v2 == 0:
-        return '-'
-    elif v1 == 0:
-        return '+∞'
-    else:
-        return str(round((v2 - v1) / v1 * 100, 2)) + '%'
-
-
 # 计算粉丝男女占比
 def calc_follower_gender_percentage(followers):
     percentages = []
@@ -134,7 +104,7 @@ def calc_follower_gender_percentage(followers):
                 follower_count += 1
                 female_count += 1 if f['gender'] == 'f' else 0
         if follower_count:
-            female_percentage = round_decimal(female_count / follower_count * 100)
+            female_percentage = utils.round_decimal(female_count / follower_count * 100)
             male_percentage = 100 - female_percentage
             percentages.append([p['name'], str(female_percentage) + '%', str(male_percentage) + '%'])
     return percentages
@@ -157,7 +127,7 @@ def calc_region_rank(id, followers):
                     ranks.append({'province': f['province'], 'count': 1})
     
     for r in ranks:
-        r['percentage'] = round_decimal(r['count'] / followers_count * 100)
+        r['percentage'] = utils.round_decimal(r['count'] / followers_count * 100)
     
     ranks.sort(key=lambda r: r['count'], reverse=True)
     return(ranks[:10])
@@ -293,8 +263,8 @@ ws.append(['', label + '发文数', label + '互动数', last_label + '发文数
 for i, s in enumerate(primary_summary):
     ws.append([s['brand_name'], s['article_count'], s['interact_sum'],\
         last_primary_summary[i]['article_count'], last_primary_summary[i]['interact_sum'],\
-        calc_relative_ratio_1(last_primary_summary[i]['article_count'] ,s['article_count']),\
-        calc_relative_ratio_1(last_primary_summary[i]['interact_sum'] ,s['interact_sum'])])
+        utils.calc_relative_ratio_1(last_primary_summary[i]['article_count'] ,s['article_count']),\
+        utils.calc_relative_ratio_1(last_primary_summary[i]['interact_sum'] ,s['interact_sum'])])
 
 # 发文情况
 ct = arrow.now().shift(months=-1)
@@ -326,7 +296,7 @@ ws.append([])
 ws.append(['', last_label + '粉丝数', label + '粉丝数', '增长数量', '增长率'])
 for p in primarys:
     ws.append([p['name'], p['last_follower_count'], p['follower_count'],p['follower_count'] - p['last_follower_count'],\
-    calc_relative_ratio_1(p['last_follower_count'], p['follower_count'])])
+    utils.calc_relative_ratio_1(p['last_follower_count'], p['follower_count'])])
 
 # 粉丝男女占比
 ws.append([])
@@ -388,7 +358,7 @@ for p in primarys:
         p['mention_summary'] = mention_summary
 
     mention_count_offset = mention_summary['mention_count'] - last_mention_summary['mention_count']
-    mention_count_offset_percentage = calc_relative_ratio_1(last_mention_summary['mention_count'], mention_summary['mention_count'])
+    mention_count_offset_percentage = utils.calc_relative_ratio_1(last_mention_summary['mention_count'], mention_summary['mention_count'])
     ws.append([p['brand_name'], last_mention_summary['mention_count'], mention_summary['mention_count'],\
         mention_count_offset, mention_count_offset_percentage])
 
