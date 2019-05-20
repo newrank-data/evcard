@@ -149,14 +149,9 @@ def get_mentions(filepath):
 
 
 def get_ambiguous_words(brand):
-    filepath = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'src', 'ambiguous_words_' + brand + '.xlsx')
-    wb = load_workbook(filepath)
-    sheet_name = wb.sheetnames[0]
-    ws = wb.get_sheet_by_name(sheet_name)
-    cells = ws['A:A']
-    words = []
-    for i in range(len(cells)):
-        words.append(cells[i].value)
+    filepath = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'src', 'ambiguous_words_' + brand + '.txt')
+    with open(filepath, 'r', encoding='utf-8') as f:
+        words = list(map(lambda i: i[:-1] if '\n' in i else i, f.readlines()))
     return words
 
 

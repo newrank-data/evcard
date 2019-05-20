@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # _*_ coding: utf-8 _*_
 
-# 此脚本用于整理微博回采的数据，生成用于撰写报告的微博主号相关数据，写入 weibo_YYYYMM_primary.xlsx
+# 此脚本用于整理微博回采的数据，生成用于撰写报告的微博主号相关数据，写入“微博主号统计表_YYYYMM.xlsx”
 
 
 # 外部库（需要“pip install 库名”进行安装）
@@ -192,7 +192,10 @@ def filter_irrelevant_mention(item):
     if item['keyword'] == 'gofun':
         if 'gofun' not in item['content']:
             return False
-        elif re.search(r'潮流集成', item['content']):
+        elif re.search(r'车|車|租|开|押金|退|退费|客服|补贴|app|滴滴|易到|ofo|共享|出行|诉|骗|运维|钱|资产|企业|用户',\
+            item['content']) and not re.search(r'张开|盛开', item['content']):
+            return True
+        elif re.search(r'潮流集成|许嵩|集门网', item['content']):
             return False
         else:
             for w in gofun_ambiguous_words:
@@ -202,33 +205,37 @@ def filter_irrelevant_mention(item):
     elif item['keyword'] == '盼达':
         if '盼达' not in item['content']:
             return False
-        elif re.search(r'盼达用车|盼达租车|盼达汽车', item['content']):
-            return True
-        elif re.search(r'陈立农|金秀贤|张艺兴|pandakorea|国宝|ppt|成都地铁|3号线|三号线', item['content']):
-            return False
-        elif re.search(r'车|租|开|押金|退|退费|客服|补贴|app|滴滴|易到|共享|出行|诉|骗|运维|钱|资产|企业',\
-            item['content']) and not re.search(r'开始|张开|盛开', item['content']):
-            return True
         else:
             for w in panda_ambiguous_words:
                 if w in item['content']:
                     return False
-            return True
+            if re.search(r'盼达用车|盼达租车|盼达汽车|盼达共享汽车', item['content']):
+                return True
+            elif re.search(r'陈立农|金秀贤|张艺兴|罗云熙|连淮伟|pandakorea|国宝|ppt|成都地铁|3号线|三号线|大熊猫', item['content']):
+                return False
+            elif item['author'] in ['7075449161', '5017652771', '6397071241', '6329035246']:
+                return False
+            elif re.search(r'车|車|租|开|押金|退|退费|客服|补贴|app|滴滴|易到|ofo|共享|出行|诉|骗|运维|钱|资产|企业|用户',\
+                item['content']) and not re.search(r'开始|张开|盛开', item['content']):
+                return True
+            else:
+                return False
     elif item['keyword'] == '途歌':
         if '途歌' not in item['content']:
             return False
-        elif re.search(r'途歌公司|途歌租车|途歌汽车|TOGO途歌', item['content']):
-            return True
-        elif re.search(r'陈立农|里咏', item['content']):
-            return False
-        elif re.search(r'车|租|开|押金|退|退费|客服|补贴|app|滴滴|易到|共享|出行|诉|骗|运维|钱|资产|企业', \
-            item['content']) and not re.search(r'开始|张开|盛开', item['content']):
-            return True
         else:
             for w in togo_ambiguous_words:
                 if w in item['content']:
                     return False
-            return True
+            if re.search(r'途歌公司|途歌租车|途歌汽车|TOGO途歌|王利峰', item['content']):
+                return True
+            elif re.search(r'车|車|租|开|押金|退|退费|客服|补贴|app|滴滴|易到|ofo|共享|出行|诉|骗|运维|钱|资产|企业|用户', \
+                item['content']) and not re.search(r'开始|张开|盛开', item['content']):
+                return True
+            elif re.search(r'陈立农|里咏|音响|诗|詩', item['content']):
+                return False
+            else:
+                return True
     elif item['keyword'] == '滴滴共享汽车' or item['keyword'] == '小桔租车':
         if re.search(r'滴滴共享汽车|小桔', item['content']):
             return True
