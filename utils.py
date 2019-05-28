@@ -252,6 +252,30 @@ def get_videos(filepath):
     return videos
 
 
+def get_datas(filepath):
+    wb = load_workbook(filepath, read_only=True)
+    sheet_name = wb.sheetnames[0]
+    ws = wb.get_sheet_by_name(sheet_name)
+
+    fields= get_fields(ws[1])
+    url_crc_index = fields['url_crc']
+    url_index = fields['url']
+    title_index = fields['title']
+    source_type_index = fields['source_type']
+    release_date_index = fields['release_date']
+    datas = []
+
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, values_only=True):
+        data = {
+            'url_crc': row[url_crc_index],
+            'url': row[url_index],
+            'title': row[title_index],
+            'source_type': row[source_type_index],
+            'release_date': row[release_date_index]}
+        datas.append(data)
+    return datas
+
+
 def match_brand(str):
     if re.search(r'evcard', str, re.I) or str == 'E享会':
         return 'EVCARD'
