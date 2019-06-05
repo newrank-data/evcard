@@ -243,7 +243,12 @@ def deduplicate_eastmoney(items):
     unique_ids = []
     for i in items:
         if i['subdomain'] == 'caifuhao':
-            i['unique_id'] = re.search(r'\d{23}', i['url']).group(0)
+            m = re.search(r'\d+', i['url'])
+            if m:
+                i['unique_id'] = m.group(0)
+            else:
+                print('未匹配 unique_id', i)
+                exit()
         elif 'com/a/' in i['url']:
             i['unique_id'] = re.search(r'\d{18}', i['url']).group(0)
         else:
@@ -462,7 +467,12 @@ def deduplicate_autohome(items):
         elif i['subdomain'] == 'forum':
             i['unique_id'] = re.search(r'\-t(\d{8})\-', i['url']).group(1)
         elif i['subdomain'] == 'club':
-            i['unique_id'] = re.search(r'\/(\d+)\-\d+', i['url']).group(1)
+            m = re.search(r'(\d{8})\-\d+', i['url'])
+            if m:
+                i['unique_id'] = m.group(1)
+            else:
+                print('未匹配 unique_id', i)
+                exit()
         else:
             m = re.search(r'(\d+)\.html', i['url'])
             if m:
