@@ -55,6 +55,8 @@ def deduplicate_sina(items):
             bid = re.search(r'bid=(\d+)', i['url']).group(1)
             tid = re.search(r'tid=(\d+)', i['url']).group(1)
             i['unique_id'] = bid + tid
+        elif i['subdomain'] == 'vip' and 'id=' in i['url']:
+            i['unique_id'] = re.search(r'id=(\d+)', i['url']).group(1)
         else:
             m = re.search(r'[a-z0-9]{14,18}', i['url'])
             if m:
@@ -75,7 +77,7 @@ def deduplicate_sina(items):
 def deduplicate_toutiao(items):
     unique_ids = []
     for i in items:
-        m = re.search(r'\d{19}', i['url'])
+        m = re.search(r'\d{16,19}', i['url'])
         if m:
             i['unique_id'] = m.group(0)
         else:
@@ -98,6 +100,8 @@ def deduplicate_sohu(items):
             m = re.search(r'\/(\d{9})\_', i['url'])
             if m:
                 i['unique_id'] = m.group(1)
+            elif '.shtml' in i['url']:
+                i['unique_id'] = re.search(r'(\d{9})\.shtml', i['url']).group(1)
             else:
                 i['unique_id'] = ''
                 i['flag'] = ''
@@ -105,7 +109,7 @@ def deduplicate_sohu(items):
             i['unique_id'] = re.search(r'\/t\/n(\d+)', i['url']).group(1)
         elif i['subdomain'] == 'api':
             i['unique_id'] = re.search(r'newsId\=(\d+)', i['url']).group(1)
-            
+
         if not i['unique_id'] == '':
             if i['unique_id'] in unique_ids:
                 i['flag'] = 0
@@ -119,12 +123,15 @@ def deduplicate_baidu(items):
     unique_ids = []
     items = list(filter(lambda i: i['source_type'] == '0' and not i['subdomain'] == 'gupiao', items))
     for i in items:
-        m = re.search(r'\d{17,19}', i['url'])
-        if m:
-            i['unique_id'] = m.group(0)
+        if i['subdomain'] == 'cache':
+            i['unique_id'] = re.search(r'\/c\?m=([a-z0-9]+)', i['url']).group(1)
         else:
-            i['unique_id'] = ''
-            i['flag'] = ''
+            m = re.search(r'\d{17,19}', i['url'])
+            if m:
+                i['unique_id'] = m.group(0)
+            else:
+                i['unique_id'] = ''
+                i['flag'] = ''
         
         if not i['unique_id'] == '':
             if i['unique_id'] in unique_ids:
@@ -172,6 +179,10 @@ def deduplicate_ifeng(items):
             i['unique_id'] = re.search(r'sub\_(\w+)', i['url']).group(1)
         elif 'aid=' in i['url']:
             i['unique_id'] = re.search(r'aid\=(\d+)', i['url']).group(1)
+        elif 'guid=' in i['url']:
+            i['unique_id'] = re.search(r'guid\=([a-z0-9\-]+)', i['url']).group(1)
+        elif '.shtml' in i['url']:
+            i['unique_id'] = re.search(r'\/(\d+)\.shtml', i['url']).group(1)
         else:
             m = re.search(r'\d{8}\/(\d+)', i['url'])
             if m:
@@ -243,18 +254,20 @@ def deduplicate_eastmoney(items):
     unique_ids = []
     for i in items:
         if i['subdomain'] == 'caifuhao':
-            m = re.search(r'\d+', i['url'])
-            if m:
-                i['unique_id'] = m.group(0)
+            m1 = re.search(r'\d+', i['url'])
+            if m1:
+                i['unique_id'] = m1.group(0)
             else:
                 print('未匹配 unique_id', i)
                 exit()
+        elif i['subdomain'] == 'emwap':
+            i['unique_id'] = re.search(r'\d{18}', i['url']).group(0)
         elif 'com/a/' in i['url']:
             i['unique_id'] = re.search(r'\d{18}', i['url']).group(0)
         else:
-            m = re.search(r'(\d+)\.html', i['url'])
-            if m:
-                i['unique_id'] = m.group(1)
+            m2 = re.search(r'(\d+)\.html', i['url'])
+            if m2:
+                i['unique_id'] = m2.group(1)
             else:
                 i['unique_id'] = ''
                 i['flag'] = ''
@@ -467,16 +480,20 @@ def deduplicate_autohome(items):
         elif i['subdomain'] == 'forum':
             i['unique_id'] = re.search(r'\-t(\d{8})\-', i['url']).group(1)
         elif i['subdomain'] == 'club':
-            m = re.search(r'(\d{8})\-\d+', i['url'])
-            if m:
-                i['unique_id'] = m.group(1)
+            m1 = re.search(r'(\d{8})\-\d+', i['url'])
+            if m1:
+                i['unique_id'] = m1.group(1)
             else:
                 print('未匹配 unique_id', i)
                 exit()
+        elif i['subdomain'] == 'k':
+            i['unique_id'] = re.search(r'\/(\w+)$', i['url']).group(1)
+        elif i['subdomain'] == 'm':
+            i['unique_id'] = re.search(r'\/(\d+)$', i['url']).group(1)
         else:
-            m = re.search(r'(\d+)\.html', i['url'])
-            if m:
-                i['unique_id'] = m.group(1)
+            m2 = re.search(r'(\d+)\.html', i['url'])
+            if m2:
+                i['unique_id'] = m2.group(1)
             else:
                 i['unique_id'] = ''
                 i['flag'] = ''
