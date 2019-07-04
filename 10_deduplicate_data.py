@@ -57,6 +57,8 @@ def deduplicate_sina(items):
             i['unique_id'] = bid + tid
         elif i['subdomain'] == 'vip' and 'id=' in i['url']:
             i['unique_id'] = re.search(r'id=(\d+)', i['url']).group(1)
+        elif i['subdomain'] == 'iask':
+            i['unique_id'] = re.search(r'\/(\w{12})\.html', i['url']).group(1)
         else:
             m = re.search(r'[a-z0-9]{14,18}', i['url'])
             if m:
@@ -211,12 +213,16 @@ def deduplicate_163(items):
     items = list(items)
     items.sort(key=lambda i: i['subdomain'], reverse=True)
     for i in items:
-        m = re.search(r'\w{16}', i['url'])
-        if m:
-            i['unique_id'] = m.group(0)
+        m1 = re.search(r'\w{16}', i['url'])
+        if m1:
+            i['unique_id'] = m1.group(0)
         else:
-            i['unique_id'] = ''
-            i['flag'] = ''
+            m2 = re.search(r'\/(\d{6})\/(\d+)\.html', i['url'])
+            if m2:
+                i['unique_id'] = m2.group(1) + m2.group(2)
+            else:
+                i['unique_id'] = ''
+                i['flag'] = ''
         
         if not i['unique_id'] == '':
             if i['unique_id'] in unique_ids:
@@ -287,12 +293,17 @@ def deduplicate_people(items):
     unique_ids = []
     items = filter(lambda i: not i['subdomain'] == 'liuyan', items)
     for i in items:
-        m = re.search(r'(\d+)\.html', i['url'])
-        if m:
-            i['unique_id'] = m.group(1)
+        if i['subdomain'] == 'bbs1':
+            i['unique_id'] = re.search(r'\/(\d+)\.html', i['url']).group(1)
+        elif i['subdomain'] == 'paper':
+            i['unique_id'] = re.search(r'content\_(\d+)\.', i['url']).group(1)
         else:
-            i['unique_id'] = ''
-            i['flag'] = ''
+            m = re.search(r'\/c\d+\-(\d+)', i['url'])
+            if m:
+                i['unique_id'] = m.group(1)
+            else:
+                i['unique_id'] = ''
+                i['flag'] = ''
 
         if not i['unique_id'] == '':
             if i['unique_id'] in unique_ids:
@@ -306,14 +317,18 @@ def deduplicate_people(items):
 def deduplicate_dzwww(items):
     unique_ids = []
     for i in items:
-        m = re.search(r'(\d+)\.htm', i['url'])
-        if m:
-            i['unique_id'] = m.group(1)
-        elif 'id=' in i['url']:
-            i['unique_id'] = re.search(r'id\=(\d+)', i['url']).group(1)
+        if i['subdomain'] == 'paper':
+            m1 = i['unique_id'] = re.search(r'dzwww\.com\/(\w+)\/content\/(\d+)\/(\w+)\.', i['url'])
+            i['unique_id'] = m1.group(1) + m1.group(2) + m1.group(3)
         else:
-            i['unique_id'] = ''
-            i['flag'] = ''
+            m2 = re.search(r'(\d+)\.htm', i['url'])
+            if m2:
+                i['unique_id'] = m2.group(1)
+            elif 'id=' in i['url']:
+                i['unique_id'] = re.search(r'id\=(\d+)', i['url']).group(1)
+            else:
+                i['unique_id'] = ''
+                i['flag'] = ''
 
         if not i['unique_id'] == '':
             if i['unique_id'] in unique_ids:
