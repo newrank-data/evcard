@@ -170,7 +170,7 @@ def deduplicate_ifeng(items):
     unique_ids = []
     for i in items:
         if 'com/c/' in i['url']:
-            i['unique_id'] = re.search(r'[\/|\_](\w{11})$', i['url']).group(1)
+            i['unique_id'] = re.search(r'[\/|\_](\w{11})', i['url']).group(1)
         elif 'com/a/' in i['url']:
             i['unique_id'] = re.search(r'(\d+)\_0', i['url']).group(1)
         elif 'ucms_' in i['url']:
@@ -181,6 +181,8 @@ def deduplicate_ifeng(items):
             i['unique_id'] = re.search(r'aid\=(\d+)', i['url']).group(1)
         elif 'guid=' in i['url']:
             i['unique_id'] = re.search(r'guid\=([a-z0-9\-]+)', i['url']).group(1)
+        elif '_0.shtml' in i['url']:
+            i['unique_id'] = re.search(r'(\d+)\_0\.shtml', i['url']).group(1)
         elif '.shtml' in i['url']:
             i['unique_id'] = re.search(r'\/(\d+)\.shtml', i['url']).group(1)
         else:
