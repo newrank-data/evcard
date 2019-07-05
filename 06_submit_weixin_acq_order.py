@@ -78,34 +78,20 @@ if bangdou_cost > bangdou_count:
 else:
     print('√ 榜豆足够执行当前回采任务，回采后剩余 {} 榜豆'.format(bangdou_count - bangdou_cost))
 
+if inserting_accounts:
+    accountIds = ','.join(list(map(lambda i: i['id'], inserting_accounts)))
 
-# 提交回采任务
-confirm_submit = input('\n>>> 提交回采任务（y/n）：')
-if confirm_submit == 'y':
-
-    # 添加和删除回采账号
-    deleting_accounts = nr.get_weixin_acq_account()
-    if deleting_accounts:
-        print('\n回采列表将删除 {} 个账号...'.format(len(deleting_accounts)))
-        for d_account in deleting_accounts:
-            d_res = nr.delete_weixin_acq_account({'uuid':d_account['uuid']})
-            print('%-50s' % ('--> 删除：{}（{}）{}'.format(d_account['weixin_name'], d_account['account'], '成功' if d_res == 1 else '失败')))
-            time.sleep(1)
-
-    if inserting_accounts:
-        print('\n回采列表将添加 {} 个账号...'.format(len(inserting_accounts)))
-        for i_account in inserting_accounts:
-            i_res = nr.insert_weixin_acq_account({
-                'account': i_account['id'],
-                'biz_info': i_account['biz_info'],
-                'weixin_name': i_account['name']
-            })
-            print('%-50s' % ('--> 添加：{}（{}）{}'.format(i_account['name'], i_account['id'], '成功' if i_res == 1 else '失败')))
-            time.sleep(1)
-
-    s_res = nr.submit_weixin_acq_order(str(start_date), str(end_date))
-    print('--> 提交结果：{}'.format(s_res)) 
-    client.close()
+    # 提交回采任务
+    confirm_submit = input('\n>>> 提交回采任务（y/n）：')
+    if confirm_submit == 'y':
+        order_id = nr.submit_weixin_acq_order(accountIds, str(start_date), str(end_date))
+        print('order_id:', order_id)
+        pay_status = nr.pay_acq_order(order_id)
+        print('pay_status:', pay_status)
+        client.close()
+    else:
+        print('回采任务取消，程序退出')
+        client.close()
 else:
+    print('回采账号数量为 0，程序退出')
     client.close()
-    exit()

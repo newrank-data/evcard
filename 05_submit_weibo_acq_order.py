@@ -48,11 +48,6 @@ def publish_filter(account):
     return date.__ge__(start_date)
 
 
-# 组装主页链接
-def assemble_url(item):
-    return 'https://weibo.com/u/{}'.format(item['id'])
-
-
 # 手动输入日期范围并校验
 print('>>> 按 yyyy-mm-dd 格式输入回采日期范围...')
 start_date = input_date('开始日期：')
@@ -86,23 +81,20 @@ else:
 
 
 # 添加回采账号并提交回采任务
-item = None
 if inserting_accounts:
-    urls = ','.join(list(map(assemble_url, inserting_accounts)))
-    item = {
-      'urls': urls,
-      'start_time': str(start_date),
-      'end_time': str(end_date),
-      'all_data': '0'
-    }
-    item = json.dumps(item)
+    accountIds = ','.join(list(map(lambda i: i['id'], inserting_accounts)))
 
-# 提交回采任务
-confirm_submit = input('\n>>> 提交回采任务（y/n）：')
-if confirm_submit == 'y':
-    s_res = nr.submit_weibo_acq_order(item)
-    print('--> 提交结果：{}'.format(s_res))
-    client.close()
+    # 提交回采任务
+    confirm_submit = input('\n>>> 提交回采任务（y/n）：')
+    if confirm_submit == 'y':
+        order_id = nr.submit_weibo_acq_order(accountIds, str(start_date), str(end_date))
+        print('order_id:', order_id)
+        pay_status = nr.pay_acq_order(order_id)
+        print('pay_status:', pay_status)
+        client.close()
+    else:
+        client.close()
+        print('回采任务取消，程序退出')
 else:
     client.close()
-    exit()
+    print('回采账号数量为 0，程序退出')
