@@ -26,9 +26,9 @@ collection = db.sharecar_weixin_account
 today = str(datetime.date.today())
 
 
-# 使用公众号 id 分别请求新榜官网的账号搜索接口和账号详情接口，更新 wx_id、biz_info 和 uuid
+# 使用公众号 id 分别请求新榜官网的账号搜索接口和账号详情接口，补充新账号的 wx_id、biz_info 和 uuid
 info_accounts = list(collection.find(
-    {'is_relevant': True, 'is_valid': True},
+    {'is_relevant': True, 'is_valid': True, 'uuid': {'$exists': False}},
     {'id': 1, 'name': 1, 'wx_id': 1, 'uuid': 1}))
 
 for account in info_accounts:
@@ -58,7 +58,7 @@ article_accounts = list(collection.find(
     {'id': 1, 'name': 1, 'uuid': 1}))
 
 for account in article_accounts:
-    t = nr.get_weixin_account_latest_publish_time(account['uuid'])
+    t = nr.get_weixin_account_latest_publish_time(account['id'], account['uuid'])
     if t:
         print('%-50s' % ('{}（{}）{}'.format(account['name'], account['id'], t)), end='\r')
         collection.update(

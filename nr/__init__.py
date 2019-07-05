@@ -22,9 +22,11 @@ import random
 import hashlib
 import re
 import math
+import arrow
 
 # 其他配置
 username, password, md_key, app_key = '', '', '', ''
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
 
 
 # 初始化，读取 settings 获取用户名及密码
@@ -191,6 +193,7 @@ def search_weixin_account_wx_info(keyword):
             })
     return accounts
 
+
 # 获取微信上的公众号信息（结果可能是 0 到 1 个，完全匹配 id）
 def get_weixin_account_wx_info(id):
     accounts = search_weixin_account_wx_info(id)
@@ -205,6 +208,7 @@ def get_weixin_account_wx_info(id):
                 }
                 break
     return info
+
 
 # 获取新榜上的公众号信息（uuid）
 def get_weixin_account_nr_info(id):
@@ -222,11 +226,11 @@ def get_weixin_account_nr_info(id):
 
 
 # 获取公众号最新发布文章时间
-def get_weixin_account_latest_publish_time(uuid):
+def get_weixin_account_latest_publish_time(id, uuid):
     base = 'https://www.newrank.cn/xdnphb'
     endpoint = '/detail/getAccountArticle'
 
-    # 接口不稳定，需要有重试机制，不超过 3 次
+    # 官网接口不稳定，需要有重试机制，不超过 3 次
     r, t, counter = None, None, 0
     while not r:
         counter += 1
@@ -235,6 +239,17 @@ def get_weixin_account_latest_publish_time(uuid):
             t =  r['lastestArticle'][0]['publicTime'][:10]
             break
         time.sleep(2)
+    
+    # 由于官网采集资源紧张，有些实际上更新了的账号会漏掉，通过搜狗微信尽量补上
+    if not t:
+        url = 'https://weixin.sogou.com/weixin?type=1&s_from=input&query=' + id
+        s_r = requests.get(url, headers = headers)
+        if s_r.status_code == 200:
+            soup = BeautifulSoup(s_r.text, 'lxml')
+            dd_span = soup.select('dd span')
+            if dd_span:
+                timestamp = re.search(r'\d+', str(dd_span[0])).group(0)
+                t = arrow.get(timestamp).format('YYYY-MM-DD')
     return t
 
 
