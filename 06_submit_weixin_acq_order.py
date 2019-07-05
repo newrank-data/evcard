@@ -79,7 +79,7 @@ else:
     print('√ 榜豆足够执行当前回采任务，回采后剩余 {} 榜豆'.format(bangdou_count - bangdou_cost))
 
 if inserting_accounts:
-    accountIds = ','.join(list(map(lambda i: i['id'], inserting_accounts)))
+    accountIds = ','.join(list(map(lambda i: i['wx_id'], inserting_accounts)))
 
     # 提交回采任务
     confirm_submit = input('\n>>> 提交回采任务（y/n）：')
