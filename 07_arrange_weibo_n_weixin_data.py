@@ -71,7 +71,7 @@ for article in weibo_articles:
             {'id': article['id']},
             {'_id': 0, 'id': 1, 'brand': 1, 'is_primary': 1, 'is_regional': 1, 'region': 1}
         )
-    
+
     article['brand'] = brands.get(iter_weibo_account['brand'])
     article['is_primary'] = '是' if iter_weibo_account['is_primary'] == 1 else '否'
     article['region'] = iter_weibo_account.get('region', '')
@@ -91,6 +91,10 @@ for article in weixin_articles:
             {'id': article['id']},
             {'_id': 0, 'id': 1, 'brand': 1, 'type': 1, 'is_primary': 1, 'is_regional': 1, 'region': 1}
         )
+
+    if not iter_weixin_account:
+        print('无法在数据库中匹配到公众号：', article['id'])
+        exit()
     
     article['brand'] = brands.get(iter_weixin_account['brand'])
     article['type'] = '订阅号' if iter_weixin_account['type'] == 1 else '服务号'

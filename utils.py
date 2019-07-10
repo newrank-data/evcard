@@ -3,6 +3,7 @@
 
 # 外部库（需要“pip install 库名”进行安装）
 from openpyxl import load_workbook
+import arrow
 
 # 内置库
 import re
@@ -53,8 +54,13 @@ def get_fields(row):
 
 def get_articles(filepath):
     wb = load_workbook(filepath, read_only=True)
-    sheet_name = wb.sheetnames[0]
 
+    if len(wb.sheetnames) > 1:
+        print('以下表格存在多个数据表，除第一个以外的都要删除：')
+        print(filepath)
+        exit()
+
+    sheet_name = wb.sheetnames[0]
     if not (sheet_name == '数据清单' or sheet_name == 'list'):
         print('源数据表表名不正确（应为“数据清单”或“list”），无法读取，程序退出')
         exit()
@@ -70,6 +76,8 @@ def get_articles(filepath):
             article['name'] = row[fields['微博昵称']]
             article['follower'] = row[fields['粉丝数']]
             article['publish_time'] = row[fields['发布时间']]
+            if isinstance(article['publish_time'], str):
+                article['publish_time'] = arrow.get(article['publish_time']).datetime
             article['content'] = row[fields['内容']]
             article['quote'] = row[fields['转发数']]
             article['comment'] = row[fields['评论数']]
@@ -77,8 +85,10 @@ def get_articles(filepath):
             article['url'] = row[fields['链接']]
             article['homepage_url'] = row[fields['主页链接']]
         else: # 微信
-            article['name'] = row[fields['公众号昵称']]
+            article['name'] = row[fields['公众号昵称']] if '公众号昵称' in fields else row[fields['账号名称']]
             article['id'] = row[fields['微信号']]
+            if '@qianyi' in article['id']:
+                article['id'] = re.sub(r'@qianyi', '', article['id'])
             article['author'] = row[fields['作者']]
             article['is_head'] = '是' if row[fields['发布位置']] == 0 else '否'
             article['is_original'] = '是' if row[fields['是否原创']] == 1 else '否'
@@ -101,6 +111,8 @@ def get_articles(filepath):
             article['audio_url'] = row[fields['音频链接']]
             article['memo'] = row[fields['备注']]
             article['publish_time'] = row[fields['发布时间']]
+            if isinstance(article['publish_time'], str):
+                article['publish_time'] = arrow.get(article['publish_time']).datetime
         articles.append(article)
     return articles
 
