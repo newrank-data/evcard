@@ -253,6 +253,47 @@ def get_weixin_account_latest_publish_time(id, uuid):
     return t
 
 
+# 获取账号回采购物车账号
+def get_cart_all_list(account_type):
+    base = 'https://data.newrank.cn/xdnphb'
+    endpoint = '/cloud/data/plus/zhhc/cart/getAllList'
+    r = request(base, endpoint, {'accountType': account_type})
+    return r['data']['list']
+
+
+# 在库中搜索微博账号
+def search_weibo_account(id):
+    base = 'https://data.newrank.cn/xdnphb'
+    endpoint = '/cloud/data/plus/zhhc/account/searchWeiBo'
+    r = request(base, endpoint, {'keyWord': id})
+    return r['data']
+
+
+# 在库中搜索公众号账号
+def search_weixin_account(id):
+    base = 'https://data.newrank.cn/xdnphb'
+    endpoint = '/cloud/data/plus/zhhc/account/search'
+    r = request(base, endpoint, {'keyWord': id})
+    return r['data']
+
+
+# 清空购物车
+def empty_cart_list(account_type):
+    base = 'https://data.newrank.cn/xdnphb'
+    endpoint = '/cloud/data/plus/zhhc/cart/emptyCartList'
+    r = request(base, endpoint, {'accountType': account_type})
+    return r['data']
+
+
+# 回采购物车添加账号
+def insert_cart_account(account, account_type):
+    account['accountType'] = account_type
+    base = 'https://data.newrank.cn/xdnphb'
+    endpoint = '/cloud/data/plus/zhhc/cart/insert'
+    r = request(base, endpoint, account)
+    return r['data']
+
+
 # 提交公众号回采任务
 def submit_weixin_acq_order(ids, start_date, end_date):
     base = 'https://data.newrank.cn/xdnphb'

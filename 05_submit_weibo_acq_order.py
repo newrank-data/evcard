@@ -49,7 +49,7 @@ def publish_filter(account):
 
 
 # 手动输入日期范围并校验
-print('>>> 按 yyyy-mm-dd 格式输入回采日期范围...')
+print('>>> 按 yyyy-mm-dd 格式输入回采日期范围：')
 start_date = input_date('开始日期：')
 end_date = input_date('结束日期：')
 if start_date.__gt__(end_date):
@@ -64,37 +64,82 @@ accounts = list(collection.find(
 
 inserting_accounts = list(filter(publish_filter, accounts))
 date_range = (end_date - start_date).days + 1
-print('--> 本次任务将回采 {} 个账号，合计 {} 天'.format(len(inserting_accounts), date_range))
-
-
-# 计算要使用多少榜豆，是否足够
-print('\n计算榜豆消耗量...')
-bangdou_cost = len(inserting_accounts) * 15 if date_range < 30 else ((date_range - 30) * 0.5 + 15) * len(inserting_accounts)
-bangdou_count = nr.count_bangdou()
-print('--> 回采需要 {} 榜豆，目前有 {} 榜豆'.format(bangdou_cost, bangdou_count))
-if bangdou_cost > bangdou_count:
-    client.close()
-    print('× 榜豆不足，请充值后再操作！')
-    exit()
-else:
-    print('√ 榜豆足够执行当前回采任务，回采后将剩余 {} 榜豆'.format(bangdou_count - bangdou_cost))
 
 
 # 添加回采账号并提交回采任务
 if inserting_accounts:
-    accountIds = ','.join(list(map(lambda i: i['id'], inserting_accounts)))
 
-    # 提交回采任务
-    confirm_submit = input('\n>>> 提交回采任务（y/n）：')
-    if confirm_submit == 'y':
-        order_id = nr.submit_weibo_acq_order(accountIds, str(start_date), str(end_date))
-        print('order_id:', order_id)
-        pay_status = nr.pay_acq_order(order_id)
-        print('pay_status:', pay_status)
+    # 检查当前账号的购物车内是否有账号，有的话先清空
+    all_list = nr.get_cart_all_list('3')
+    if len(all_list) > 0:
+        print('\n--> 购物车不为空，共有 {} 个账号，先清空...'.format(len(all_list)))
+        cart_count = nr.empty_cart_list('3')
+
+    # 通过搜索接口确认回采账号是否入库，未入库的进行提示
+    print('\n--> 检查回采账号是否入库...')
+    included_accounts = []
+    excluded_accounts = []
+    for a in inserting_accounts:
+        search_list = nr.search_weibo_account(a['id'])
+        is_included = False
+
+        for l in search_list:
+            if l['accountId'] == a['id']:
+                print('%-40s' % ('√ {} {}'.format(a['id'], a['name'])), end='\r')
+                included_accounts.append(l)
+                is_included = True
+                break
+
+        if not is_included:
+            excluded_accounts.append(a)
+            print('%-40s' % ('× {} {}'.format(a['id'], a['name'])), end='\r')
+        
+        time.sleep(1)
+    
+    # 如果有未入库的账号，提示等待入库，10 分钟后再运行，自动退出程序
+    if len(excluded_accounts) > 0:
+        print('\n\n--> 以下 {} 个账号未入库，请等待 10 分钟左右再运行，程序退出'.format(len(excluded_accounts)))
+        print(list(map(lambda i: i['id'] + '|' + i['name'] , excluded_accounts)))
         client.close()
+        exit()
+    
+    # 已确认入库的回采账号添加到购物车
+    if len(included_accounts) > 0:
+        print('\n\n--> 已入库待回采账号共 {} 个，添加到购物车...'.format(len(included_accounts)))
+        for account in included_accounts:
+            insert_result = nr.insert_cart_account(account, '3')
+            print('%-40s' % (account['accountId'] + '|' + account['accountName'] + '|' + insert_result['cartId'][:6]), end='\r')
+            time.sleep(1)
+
+        # 抽出账号id，拼接为字符串用于提交回采任务
+        accountIds = ','.join(list(map(lambda i: i['accountId'], included_accounts)))
+        print('\n\n--> 本次任务将回采 {} 个账号，合计 {} 天'.format(len(included_accounts), date_range))
+
+        # 计算要使用多少榜豆，是否足够
+        print('--> 计算榜豆消耗量...')
+        bangdou_cost = len(included_accounts) * 15 if date_range < 30 else ((date_range - 30) * 0.5 + 15) * len(included_accounts)
+        bangdou_count = nr.count_bangdou()
+        print('--> 回采需要 {} 榜豆，目前有 {} 榜豆'.format(bangdou_cost, bangdou_count))
+        if bangdou_cost > bangdou_count:
+            client.close()
+            print('× 榜豆不足，请充值后再操作')
+            exit()
+        else:
+            print('√ 榜豆足够执行当前回采任务，回采后将剩余 {} 榜豆'.format(bangdou_count - bangdou_cost))
+
+        # 提交回采任务
+        confirm_submit = input('\n>>> 确认提交回采任务（y/n）：')
+        if confirm_submit == 'y':
+            order_id = nr.submit_weibo_acq_order(accountIds, str(start_date), str(end_date))
+            print('order_id:', order_id)
+            pay_status = nr.pay_acq_order(order_id)
+            print('pay_status:', pay_status)
+            client.close()
+        else:
+            client.close()
+            print('\n--> 回采任务被取消，程序退出')
     else:
-        client.close()
-        print('回采任务取消，程序退出')
+        print('\n--> 已入库待回采账号数量为 0，程序退出')
 else:
     client.close()
-    print('回采账号数量为 0，程序退出')
+    print('\n--> 回采账号数量为 0，程序退出')
